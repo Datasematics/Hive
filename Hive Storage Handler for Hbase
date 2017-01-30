@@ -1,0 +1,37 @@
+--> Hive Storage Handler for Hbase
+
+For integrating HBase with Hive, Storage Handlers in Hive is used.
+
+Storage Handlers are a combination of InputFormat, OutputFormat, SerDe, and specific code that Hive uses to identify an external entity as a Hive table. This allows the user to issue SQL queries seamlessly, whether the table represents a text file stored in Hadoop or a column family stored in a NoSQL database such as Apache HBase, Apache Cassandra, and Amazon DynamoDB. Storage Handlers are not only limited to NoSQL databases, a storage handler could be designed for several different kinds of data stores.
+
+Example :
+
+- Create the HBase Table:
+    hbase(main):007:0> create 'employees','per_details','dept_details'
+0 row(s) in 1.2720 seconds
+
+- Insert the data into HBase table:
+   hbase(main):009:0> put 'employees','id001','per_details:firstname','Brundesh'
+0 row(s) in 0.0220 seconds
+
+hbase(main):010:0> put 'employees','id001','per_details:lastname','R'
+0 row(s) in 0.0120 seconds
+
+hbase(main):011:0> put 'employees','id001','per_details:salary','20000'
+0 row(s) in 0.0080 seconds
+
+hbase(main):012:0> put 'employees','id001','dept_details:name','Development'
+0 row(s) in 0.0100 seconds
+
+Now create the Hive table pointing to HBase table.
+
+create external table employee_hbase(Eid String, f_name string, s_name string, salary int)STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+ with serdeproperties ("hbase.columns.mapping"=":key,per_details:fname,per_details:Lname,per_details:salary")
+ tblproperties("hbase.table.name"="employees");
+ STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+
+note : If we are creating the non-native Hive table using Storage Handler then we should specify the STORED BY clause
+hbase.columns.mapping : It is used to map the Hive columns with the HBase columns. The first column must be the key column which would also be same as the HBase’s rowkey column.
+Now we can query the HBase table with SQL queries in hiveusing the below command.
+	
+select *from employee_hbase;
