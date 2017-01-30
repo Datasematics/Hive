@@ -1,0 +1,48 @@
+Struct data type
+
+It is a collection of elements of different types.we can use any data type to specify this struct data type.Elements in STRUCT type are accessed using the DOT (.) notation.
+Example – For a column c of type STRUCT {a INT; b INT} the a field is accessed by the expression c.a
+
+Example 1:
+
+CREATE TABLE tc (x INT, y INT) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+LOAD DATA LOCAL INPATH 'twovalues.csv' INTO TABLE tc;
+
+CREATE TABLE oc (z STRUCT<a: int, b: int>);
+
+INSERT INTO TABLE oc SELECT named_struct('a', x, 'b', y) FROM tc;
+
+->to insert null into struct
+INSERT INTO TABLE oc SELECT named_struct('a', cast(null as int), 'b', cast(null as int)) FROM tc; 
+
+->to select data
+select z.a from oc;
+
+-> where in select
+select z.a from oc where z.b > 5;
+
+
+->group by in select
+select z.a,z.b from oc group by z.a,z.b;
+
+Example 2:
+
+cat >mapfile
+1,abc,40000,a$b$c,pf#500$epf#200,hyd$ap$500001
+2,def,3000,d$f,pf#500,bang$kar$600038
+
+hive> create table tab11(id int,name string,sal bigint,sub array<string>,dud map<string,int>,addr struct<city:string,state:string,pin:bigint>)
+    > row format delimited
+    > fields terminated by ','
+    > collection items terminated by '$'
+    > map keys terminated by '#';
+
+hive> load data local inpath '/home/training/structfile' into table tab11;
+
+hive>select addr.city from tab11;
+
+
+Reference
+
+1. http://www.hadooptpoint.com/hive-complex-data-types-example/
