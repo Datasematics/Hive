@@ -1,0 +1,74 @@
+1.	TEXTFILE format in Hive 
+
+Step1 : create table in hive  and store as textfile
+CREATE TABLE departments (
+department_id int,
+department_name string
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+Step2: Copy the textfile.txt file separated with commas from local to hdfs location to load into hive table
+Load data inpath  ‘/hdfs/path/to/department.txt’ into table departments ;
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+2.	SEQUENCEFILE format in Hive 
+
+Step1 : create table in hive  and store as sequencefile
+CREATE TABLE departments (
+department_id int,
+department_name string
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+STORED AS SEQUENCEFILE;
+Note: You need to insert the data from another table because this SEQUENCEFILE format is binary format. It compresses the data and then stores it into the table. If you want to load directly as in TEXTFILE format that is not possible because we cannot insert the compressed files into tables.
+
+Step2: INSERT INTO  OVERWRITE TABLE departments SELECT * FROM some_table;
+
+-----------------------------------------------------------------------------------------------------------------
+
+3.	RCFILE  format in Hive 
+
+Step1 : create table in hive  and store as RCFILE
+CREATE TABLE departments (
+department_id int,
+department_name string
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+STORED AS RCFILE;
+
+
+Note :  RCFILE stands of Record Columnar File which is another type of binary file format which offers high compression rate on the top of the rows.
+RCFILE is used when we want to perform operations on multiple rows at a time.RCFILEs are flat files consisting of binary key/value pairs, which shares much similarity with SEQUENCEFILE.
+Step2: INSERT INTO  OVERWRITE TABLE departments SELECT * FROM some_table
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+4.	ORCFILE  format in Hive 
+
+Step1 : create table in hive  and store as  ORCFILE
+CREATE TABLE departments (
+department_id int,
+department_name string
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+STORED AS ORCFILE;
+
+
+Note : ORC stands for Optimized Row Columnar which means it can store data in an optimized way than the other file formats. ORC reduces the size of the original data up to 75%. As a result the speed of data processing also increases. ORC shows better performance than Text, Sequence and RC file formats.
+Step2: INSERT INTO  OVERWRITE TABLE departments SELECT * FROM some_table
+
+-------------------------------------------------------------------------------------------------------------------------------------
+5.	Avro format in Hive
+
+1.	create a schema for avro with extension of  ‘filenmae.avsc’
+eg : avro schema looks like 
+	
+	
+2.	copy this avro schema to hdfs location  
+3	Hadoop fs –put   /local/path/ /path/to/hdfs
+CREATE EXTERNAL TABLE departments
+STORED AS AVRO
+LOCATION 'hdfs:///hive-test/departments'
+TBLPROPERTIES ('avro.schema.url'='hdfs://quickstart.cloudera/hiev-test/departments.avsc');
