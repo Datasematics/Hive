@@ -1,0 +1,26 @@
+Map data type
+
+It is an unordered collection of key-value pairs.Keys must be of primitive types.Values can be of any type.
+
+Example:
+
+$ cat >mapfile
+1,abc,40000,a$b$c,pf#500$epf#200,hyd
+2,def,3000,d$f,pf#500,bang
+
+hive>create table tab10(id int,name string,sal bigint,sub array<string>,dud map<string,int>,city string)
+row format delimited
+fields terminated by ','
+collection items terminated by '$'
+map keys terminated by '#';
+
+hive> load data local inpath '/home/cloudera/mapfile' overwrite into table tab10;
+
+hive>select dud["pf"] from tab10; 
+
+hive>select dud["pf"],dud["epf"] from tab10;
+
+hive>select dud["pf"] from tab10 group by dud["pf"];
+
+hive> select dud["pf"],dud["epf"] from tab10 where dud["epf"] = 200;
+ 
