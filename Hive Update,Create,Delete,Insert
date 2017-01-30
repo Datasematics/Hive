@@ -1,0 +1,98 @@
+Hive Update,Create,Delete,Insert
+
+In hive later versions UPDATE was not supported,but there were workarounds to do update a transaction
+
+As mentioned in apache hive doc about ACID limitation, for ACID support table should be in ORC format plus non sorted and bucket enabled.
+
+->ORC
+The Optimized Row Columnar (ORC) file format provides a highly efficient way to store Hive data. It was designed to overcome limitations of the other Hive file formats. Using ORC files improves performance when Hive is reading, writing, and processing data.
+
+Lets see how to do INSERT,UPDATE,DELETE in newer version of hive. 
+
+-> Create a table "test"
+
+Example: 
+CREATE EXTERNAL TABLE 
+    test (EmployeeID Int,FirstName String,Designation  
+        String,Salary Int,Department String) 
+    ROW FORMAT DELIMITED FIELDS TERMINATED BY  "," 
+    LOCATION '/user/hdfs/Hive';
+
+-> We will try to update the salary of employee id 9 from 5,000 to 30,000.
+
+hive> UPDATE test 
+           SET salary = 30000 
+           WHERE employeeid = 9;
+
+ FAILED: SemanticException [Error 10294]: Attempt to do update or delete using transaction m anager that does not support these operations.
+
+
+While applying above query it shows a semantic Exception.In order to allow update and delete we need to add additional settings in hive-site.xml and create table with ACID output format support.
+
+Steps:
+
+1. New Configuration Parameters for Transactions
+
+ hive.support.concurrency – true
+ hive.enforce.bucketing – true
+ hive.exec.dynamic.partition.mode – nonstrict
+ hive.txn.manager –org.apache.hadoop.hive.ql.lockmgr.DbTxnManager
+ hive.compactor.initiator.on – true
+ hive.compactor.worker.threads – 1
+
+You can set these configuration in hive-site.xml (after setting restart Hive ) for ever or via terminal.
+
+Dont Forget to restart Hive once the above settings are applied, else you will get the same error.
+
+
+2. Below query creates HiveTest table with ACID support
+(To do Update,delete or Insert we need to create a table that support ACID properties)
+
+create table HiveTest 
+   (EmployeeID Int,FirstName String,Designation String,
+     Salary Int,Department String) 
+   clustered by (department) into 3 buckets 
+   stored as orc TBLPROPERTIES ('transactional'='true') ;
+
+
+3. Load data into HiveTest table
+
+insert into table HiveTest 
+   select employeeid,firstname,designation,salary,department;
+
+
+4. UPDATE,DELETE and INSERT operations
+
+-> UPDATE
+
+update HiveTest 
+    set salary = 30000 
+    where employeeid = 9; 
+
+
+    # The referenced column must be a column of the table being updated.
+    # The value assigned must be an expression that Hive supports in the 	select clause.  Thus arithmetic operators, UDFs, casts, literals, 	etc. are supported.  Subqueries are not supported.
+    # Only rows that match the WHERE clause will be updated.
+    # Partitioning columns cannot be updated.
+    # Bucketing columns cannot be updated.
+    # In Hive 0.14, upon successful completion of this operation the changes 		will be auto-committed.
+
+
+-> INSERT
+
+ insert into table HiveTest 
+     values(21,'Hive','Hive',0,'B');
+
+    # Each row listed in the VALUES clause is inserted into table tablename.
+    # Values must be provided for every column in the table.  The standard 	 SQL syntax that allows the user to insert values into only some 		columns is not yet supported.  To mimic the standard SQL, nulls can 	  be provided for columns the user does not wish to assign a value to.
+    # Dynamic partitioning is supported in the same way as for INSERT...SELECT.
+    # If the table being inserted into supports ACID and a transaction manager that supports ACID is in use, this operation will be auto-committed upon successful completion.
+
+
+-> DELETE
+
+ delete from HiveTest
+     where employeeid=19;
+
+    # Only rows that match the WHERE clause will be deleted.
+    # In Hive 0.14, upon successful completion of this operation the changes will be auto-committed.
