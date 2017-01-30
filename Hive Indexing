@@ -1,0 +1,89 @@
+->hive indexing
+
+Indexing can be use under the following circumstances:
+
+    If the dataset is very large.
+    If the query execution is more amount of time than you expected.
+    If a speedy query execution is required.
+    When building a data model.
+
+Advantage
+	Indexes are maintained in a separate table in Hive so that it won’t affect the data inside the table, which contains the data. 
+	indexes can also be partitioned depending on the size of the data
+
+Types of Indexes in Hive
+
+    Compact Indexing ->stores the pair of indexed column’s value and its blockid
+    Bitmap Indexing -> (used for columns with distinct values.)stores the combination of indexed column value and list of rows as a bitmap. Bitmap index stores the combination of value and list of rows as a digital image.
+
+
+different operations that can be performed on Hive indexes:
+
+
+    Creating index
+    Showing index
+    Alter index
+    Dropping index
+
+
+syntax for creating compact index:
+
+->CREATE INDEX index_name
+ 
+ON TABLE table_name (columns,....)
+ 
+AS 'org.apache.hadoop.hive.ql.index.compact.CompactIndexHandler'
+ 
+WITH DEFERRED REBUILD;
+
+	-org.apache.hadoop.hive.ql.index.compact.CompactIndexHandler’ line specifies that a built in CompactIndexHandler will act on the created index, which means we are creating a compact index for the table.
+	-WITH DEFERRED REBUILD statement should be present in the created index because we need to alter the index in later stages using this statement.
+	-ON TABLE line, we can give the table_name for which we are creating the index and the names of the columns in brackets for which the indexes are to be created. We should specify the columns which are available only in the table.
+
+Example for creating compact index:
+
+Let's create a normal table
+->create table hive_sample(id int,name String,age int);
+
+Let's create a index for this table
+->create INDEX index_name ON table hive_sample(age)
+  AS ' 'org.apache.hadoop.hive.ql.index.compact.CompactIndexHandler'
+  WITH DEFERRED REBUILD;
+
+To alter index
+->ALTER INDEX index_name on table_name REBUILD;
+
+To show the which type formatted index on table
+->SHOW formatted index on table_name;
+
+Using BitMap Index
+->CREATE INDEX index_bitmap
+ON TABLE table_name (age)
+AS 'BITMAP'
+WITH DEFERRED REBUILD;
+
+	-Here, As ‘BITMAP’ defines the type of index as BITMAP.
+
+To drop index
+->DROP INDEX IF EXISTS index_name ON table_name;
+
+
+When not to use indexing?
+
+It is essential to know when and where indexing shouldn’t be used. They should not be used in the following scenarios:
+
+    Indexes are advised to build on the columns on which you frequently perform operations.
+    Building more number of indexes also degrade the performance of your query.
+    Type of index to be created should be identified prior to its creation (if your data requires bitmap you should not create compact).This leads to increase in time for executing your query.
+
+Features
+
+   - Indexes decrease the time for executing the query.
+   - We can have any number of indexes on the same table.
+   - We can use the type of index depending on the data we have.
+   - In some cases, Bitmap indexes work faster than the Compact indexes and 	 vice versa.
+
+Reference
+
+1. https://acadgild.com/blog/indexing-in-hive/
+
